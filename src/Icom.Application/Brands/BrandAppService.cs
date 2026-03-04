@@ -29,6 +29,7 @@ namespace Icom.Brands
 
         public async Task<PagedResultDto<BrandOutputDto>> GetPaginatedBrandsAsync(BrandsFilterDto filter)
         {
+            var searchText = string.IsNullOrEmpty(filter.SearchText) ? null : filter.SearchText.ToLower().Trim();
             using (_unitOfWorkManager.Current.DisableFilter(AbpDataFilters.MustHaveTenant, AbpDataFilters.MayHaveTenant))
             {
                 var query = (from c in await _brandRepository.GetAllAsync()
@@ -39,6 +40,12 @@ namespace Icom.Brands
                                  ShortName = c.ShortName,
                                  TenantId = c.TenantId
                              }).AsQueryable();
+
+                if (filter.SearchText != null)
+                {
+                    query = query.Where(x => x.BrandName.ToLower().Trim().Contains(searchText));
+                }
+
                 var list = query.OrderBy(o => o.BrandName).Skip(filter.Skip).Take(filter.Take).ToList();
                 return new PagedResultDto<BrandOutputDto>()
                 {

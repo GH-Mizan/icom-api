@@ -12,6 +12,7 @@ using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Text.Json;
 using System.Threading.Tasks;
 
@@ -26,6 +27,8 @@ namespace Icom.Sales
         private readonly IRepository<Pricelist> _pricelistRepository;
         private readonly IRepository<Inventory> _inventoryRepository;
         private readonly IRepository<Client> _clientRepository;
+        private readonly IRepository<Invoice> _invoiceRepository;
+        private readonly IRepository<InvoiceDetail> _invoiceDetailsRepository;
         private readonly IAbpSession _abpSession;
         private readonly IUnitOfWorkManager _unitOfWorkManager;
 
@@ -37,6 +40,8 @@ namespace Icom.Sales
             IRepository<Product> productRepository,
             IRepository<Pricelist> pricelistRepository,
             IRepository<Client> clientRepository,
+            IRepository<Invoice> invoiceRepository,
+            IRepository<InvoiceDetail> invoiceDetailsRepository,
             IUnitOfWorkManager unitOfWorkManager,
             IAbpSession abpSession)
         {
@@ -49,6 +54,8 @@ namespace Icom.Sales
             _pricelistRepository = pricelistRepository;
             _dueReceivedHistoryRepository = dueReceivedHistoryRepository;
             _clientRepository = clientRepository;
+            _invoiceRepository = invoiceRepository;
+            _invoiceDetailsRepository = invoiceDetailsRepository;
         }
 
         public async Task<PagedResultDto<SaleOutputDto>> GetPaginatedAsync(SalesFilterDto filter)
@@ -222,22 +229,20 @@ namespace Icom.Sales
             //var purchaseDetails = await _purchaseDetailsRepo.GetAllListAsync(x => salesDetailsInput.Select(s => s.ProductId).ToList().Contains(x.ProductId));
             foreach (var sd in salesDetailsInput)
             {
-                //var inventory = await _inventoryRepository.FirstOrDefaultAsync(f => f.ProductId == sd.ProductId && f.StockPointId == stockPointId);
-                //if (inventory != null)
+                
+                //if (!string.IsNullOrEmpty(sd.SerialNo))
                 //{
-                //    inventory.StockQty -= sd.Quantity;
-                //    await _inventoryRepo.UpdateAsync(inventory);
+                //    var inventory = await _inventoryRepository.FirstOrDefaultAsync(e => e.ProductId == sd.ProductId && e.SerialNo == sd.SerialNo);
+                //    inventory.Quantity -= sd.Quantity;
                 //}
-                if (!string.IsNullOrEmpty(sd.SerialNo))
-                {
-                    var inventory = await _inventoryRepository.FirstOrDefaultAsync(e => e.ProductId == sd.ProductId && e.SerialNo == sd.SerialNo);
-                    inventory.Quantity -= sd.Quantity;
-                }
-                else
-                {
-                    var inventory = await _inventoryRepository.SingleAsync(e => e.ProductId == sd.ProductId);
-                    inventory.Quantity -= sd.Quantity;
-                }
+                //else
+                //{
+                //    var inventory = await _inventoryRepository.SingleAsync(e => e.ProductId == sd.ProductId);
+                //    inventory.Quantity -= sd.Quantity;
+                //}
+
+                var inventory = await _inventoryRepository.SingleAsync(e => e.ProductId == sd.ProductId);
+                inventory.Quantity -= sd.Quantity;
 
                 var detail = ObjectMapper.Map<SaleDetail>(sd);
                 detail.SaleId = salesId;
@@ -320,6 +325,37 @@ namespace Icom.Sales
             var entity = await _saleRepository.GetAsync(id);
             return ObjectMapper.Map<SaleEntryDto>(entity);
         }
+
+        public async Task<SalesEntryInputDto> PrepareSaleFromInvoiceAsync(string invoiceNumber)
+        {
+            var output = new SalesEntryInputDto();
+            invoiceNumber = invoiceNumber.Trim();
+            var invoice = await _invoiceRepository.FirstOrDefaultAsync(f => f.InvoiceNumber == invoiceNumber && f.InvoiceType == InvoiceType.Product);
+            if(invoice != null)
+            {
+                output.Sales = new SalesEntryDto()
+                {
+                    Date = invoice.Date,
+                    ClientId = invoice.ClientId,
+                };
+                output.SalesDetails = (from id in await _invoiceDetailsRepository.GetAllAsync()
+                                       join p in await _productRepository.GetAllAsync() on id.ProductId equals p.Id
+                                       where id.InvoiceId == invoice.Id
+                                       select new SalesDetailsEntryDto()
+                                       {
+                                           ProductId = id.ProductId.Value,
+                                           ProductName = p.ProductName,
+                                           SerialNo = id.SerialNumber,
+                                           UnitPrice = id.UnitPrice.Value,
+                                           Quantity = id.Quantity.Value,
+                                           TotalPrice = id.TotalAmount
+                                       }).ToList();
+
+                if ((await _saleRepository.GetAllAsync()).Any(x => x.InvoiceNumber == invoiceNumber))
+                    output.Sales.InvoiceNumber = "DUPLICATE";
+            }
+            return output;
+        } 
     }
 
 }

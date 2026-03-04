@@ -1,6 +1,7 @@
 ﻿using Abp.Domain.Entities;
 using Abp.Domain.Entities.Auditing;
 using System;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Icom.Entities
 {
@@ -8,6 +9,7 @@ namespace Icom.Entities
     {
         public DateTime Date { get; set; }
         public int ClientId { get; set; }
+        [Column(TypeName = "decimal(10, 2)")]
         public decimal DueAmount { get; set; }
         public string Reference { get; set; }
         public string Remarks { get; set; }

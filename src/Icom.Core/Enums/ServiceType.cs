@@ -6,7 +6,6 @@
         ComputerRepair,
         ComputerSales,
         CCTVCameraSetup,
-        ComputerTraining,
-        RubberSeal
+        ComputerTraining
     }
 }

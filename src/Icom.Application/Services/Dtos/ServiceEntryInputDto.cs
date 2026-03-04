@@ -16,11 +16,8 @@ namespace Icom.Services.Dtos
         public DateTime Date { get; set; }
         public string InvoiceNumber { get; set; }
         public string ServiceTypes { get; set; } //Json value (service types array)
-        [Column(TypeName = "decimal(10, 2)")]
         public decimal ServiceCharge { get; set; }
-        [Column(TypeName = "decimal(10, 2)")]
         public decimal TotalPaid { get; set; }
-        [Column(TypeName = "decimal(10, 2)")]
         public decimal Due { get; set; }
         public PaymentStatus PaymentStatus { get; set; }
         public int ClientId { get; set; }

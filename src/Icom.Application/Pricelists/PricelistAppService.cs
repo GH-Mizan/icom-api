@@ -41,10 +41,26 @@ namespace Icom.Pricelists
             using (_unitOfWorkManager.Current.DisableFilter(AbpDataFilters.MustHaveTenant, AbpDataFilters.MayHaveTenant))
             {
                 var searchText = string.IsNullOrEmpty(filter.SearchText) ? null : filter.SearchText.ToLower().Trim();
+                var productIds = new List<int>();
+                var hasExtraFilter = false;
+
+                if (filter.CategoryId.HasValue || filter.BrandId.HasValue)
+                {
+                    hasExtraFilter = true;
+                    var productsQuery = await _productRepository.GetAllAsync();
+
+                    if (filter.CategoryId.HasValue)
+                        productsQuery = productsQuery.Where(x => x.CategoryId == filter.CategoryId);
+                    if (filter.BrandId.HasValue)
+                        productsQuery = productsQuery.Where(x => x.BrandId == filter.BrandId);
+
+                    productIds = productsQuery.Select(s => s.Id).ToList();
+                }
 
                 var query = from pl in await _pricelistRepository.GetAllAsync()
                             join p in await _productRepository.GetAllAsync() on pl.ProductId equals p.Id
-                            where _abpSession.TenantId == null || p.TenantId == _abpSession.TenantId
+                            where (_abpSession.TenantId == null || p.TenantId == _abpSession.TenantId)
+                            && (!hasExtraFilter || productIds.Contains(pl.ProductId))
                             select new PricelistOutputDto()
                             {
                                 Id = pl.Id,

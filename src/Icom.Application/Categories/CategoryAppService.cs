@@ -34,12 +34,15 @@ namespace Icom.Categories
 
         public async Task<PagedResultDto<CategoryOutputDto>> GetPaginatedCategoriesAsync(CategoryFilterDto filter)
         {
-
-            //var query = _categoryRepository.GetAll()
-            //    .WhereIf(_abpSession.TenantId.HasValue, x => x.TenantId == _abpSession.TenantId);
+            var searchText = string.IsNullOrEmpty(filter.SearchText) ? null : filter.SearchText.ToLower().Trim();
+           
             using (_unitOfWorkManager.Current.DisableFilter(AbpDataFilters.MustHaveTenant, AbpDataFilters.MayHaveTenant))
             {
                 var query = _categoryRepository.GetAll();
+                if(filter.SearchText != null)
+                {
+                    query = query.Where(x => x.CategoryName.ToLower().Trim().Contains(searchText));
+                }
 
                 var totalCount = await query.CountAsync();
 
@@ -62,7 +65,12 @@ namespace Icom.Categories
         public async Task<CategoryEntryDto> GetAsync(int id)
         {
             var entity = await _categoryRepository.GetAsync(id);
-            return ObjectMapper.Map<CategoryEntryDto>(entity);
+            return new CategoryEntryDto()
+            {
+                Id = entity.Id,
+                CategoryName = entity.CategoryName,
+                TenantId = entity.TenantId
+            };
         }
 
         public async Task CreateOrUpdateAsync(CategoryEntryDto input)

@@ -8,6 +8,7 @@ using Icom.Pricelists.Dtos;
 using System.Threading.Tasks;
 using System.Linq;
 using Microsoft.EntityFrameworkCore;
+using System.Collections.Generic;
 
 namespace Icom.Inventories
 {
@@ -35,9 +36,26 @@ namespace Icom.Inventories
             using (_unitOfWorkManager.Current.DisableFilter(AbpDataFilters.MustHaveTenant, AbpDataFilters.MayHaveTenant))
             {
                 var searchText = string.IsNullOrEmpty(filter.SearchText) ? null : filter.SearchText.ToLower().Trim();
+                var productIds = new List<int>();
+                var hasExtraFilter = false;
+
+                if(filter.CategoryId.HasValue || filter.BrandId.HasValue)
+                {
+                    hasExtraFilter = true;
+                    var productsQuery = await _productRepository.GetAllAsync();
+
+                    if (filter.CategoryId.HasValue)
+                        productsQuery = productsQuery.Where(x => x.CategoryId == filter.CategoryId);
+                    if (filter.BrandId.HasValue)
+                        productsQuery = productsQuery.Where(x => x.BrandId == filter.BrandId);
+
+                    productIds = productsQuery.Select(s=> s.Id).ToList();
+                }
+
                 var query = from i in await _inventoryRepository.GetAllAsync()
                         join p in await _productRepository.GetAllAsync() on i.ProductId equals p.Id
-                        where _abpSession.TenantId == null || p.TenantId == _abpSession.TenantId
+                        where (_abpSession.TenantId == null || p.TenantId == _abpSession.TenantId)
+                        && (!hasExtraFilter || productIds.Contains(i.ProductId))
                         select new InventoryOutputDto()
                         {
                             Id = i.Id,

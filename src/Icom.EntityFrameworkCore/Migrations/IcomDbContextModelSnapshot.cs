@@ -1681,6 +1681,64 @@ namespace Icom.Migrations
                     b.ToTable("Brands");
                 });
 
+            modelBuilder.Entity("Icom.Entities.BtebSession", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime?>("CertificateDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("CreationTime")
+                        .HasColumnType("datetime2");
+
+                    b.Property<long?>("CreatorUserId")
+                        .HasColumnType("bigint");
+
+                    b.Property<long?>("DeleterUserId")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTime?>("DeletionTime")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("ExaminationDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("IsCertificateProvided")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsExaminationHeld")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsResultPublished")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime?>("LastModificationTime")
+                        .HasColumnType("datetime2");
+
+                    b.Property<long?>("LastModifierUserId")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTime?>("ResultPublishedDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("SessionName")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("SessionPeriod")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("BtebSessions");
+                });
+
             modelBuilder.Entity("Icom.Entities.Category", b =>
                 {
                     b.Property<int>("Id")
@@ -1809,7 +1867,7 @@ namespace Icom.Migrations
                         .HasColumnType("datetime2");
 
                     b.Property<decimal>("DueAmount")
-                        .HasColumnType("decimal(18,2)");
+                        .HasColumnType("decimal(10, 2)");
 
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("bit");
@@ -2004,7 +2062,7 @@ namespace Icom.Migrations
                         .HasColumnType("int");
 
                     b.Property<decimal>("TotalBill")
-                        .HasColumnType("decimal(18,2)");
+                        .HasColumnType("decimal(10, 2)");
 
                     b.HasKey("Id");
 
@@ -2049,14 +2107,17 @@ namespace Icom.Migrations
                     b.Property<int?>("Quantity")
                         .HasColumnType("int");
 
+                    b.Property<string>("SealText")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("SerialNumber")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("ServiceTypes")
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<int>("ServiceType")
+                        .HasColumnType("int");
 
                     b.Property<decimal>("TotalAmount")
-                        .HasColumnType("decimal(18,2)");
+                        .HasColumnType("decimal(10, 2)");
 
                     b.Property<decimal?>("UnitPrice")
                         .HasColumnType("decimal(18,2)");
@@ -2078,7 +2139,7 @@ namespace Icom.Migrations
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<decimal?>("BodyUnitPrice")
-                        .HasColumnType("decimal(18,2)");
+                        .HasColumnType("decimal(10, 2)");
 
                     b.Property<DateTime>("CreationTime")
                         .HasColumnType("datetime2");
@@ -2102,7 +2163,7 @@ namespace Icom.Migrations
                         .HasColumnType("bigint");
 
                     b.Property<decimal?>("OnlineUnitPrice")
-                        .HasColumnType("decimal(18,2)");
+                        .HasColumnType("decimal(10, 2)");
 
                     b.Property<int>("ProductId")
                         .HasColumnType("int");
@@ -2111,13 +2172,13 @@ namespace Icom.Migrations
                         .HasColumnType("datetime2");
 
                     b.Property<decimal>("PurchaseUnitPrice")
-                        .HasColumnType("decimal(18,2)");
+                        .HasColumnType("decimal(10, 2)");
 
                     b.Property<int>("Quantity")
                         .HasColumnType("int");
 
                     b.Property<decimal>("SaleUnitPrice")
-                        .HasColumnType("decimal(18,2)");
+                        .HasColumnType("decimal(10, 2)");
 
                     b.Property<string>("SerialNo")
                         .HasColumnType("nvarchar(max)");
@@ -2580,6 +2641,142 @@ namespace Icom.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("SetupExpenses");
+                });
+
+            modelBuilder.Entity("Icom.Entities.Student", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("AdmisionDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int?>("BloodGroup")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("Bteb")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("BtebAdmitted")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("BtebRegistered")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("BtebRegistrationNumber")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int?>("BtebSessionId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("ClassRoll")
+                        .HasColumnType("int");
+
+                    b.Property<int>("ClientId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("ContactNumber")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int?>("Course")
+                        .HasColumnType("int");
+
+                    b.Property<int>("CourseFee")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreationTime")
+                        .HasColumnType("datetime2");
+
+                    b.Property<long?>("CreatorUserId")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTime?>("DateOfBirth")
+                        .HasColumnType("datetime2");
+
+                    b.Property<long?>("DeleterUserId")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTime?>("DeletionTime")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("DidExam")
+                        .HasColumnType("bit");
+
+                    b.Property<int>("Discount")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Duration")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Email")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("FathersName")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsSessionChanged")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("LastEducation")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("LastModificationTime")
+                        .HasColumnType("datetime2");
+
+                    b.Property<long?>("LastModifierUserId")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("MaritalStatus")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("MothersName")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Name")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Nationality")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("PermanentAddress")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("PresentAddress")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Proffession")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Religion")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Remarks")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Result")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int?>("ResultStatus")
+                        .HasColumnType("int");
+
+                    b.Property<int>("RunningProgram")
+                        .HasColumnType("int");
+
+                    b.Property<int>("TenantId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Students");
                 });
 
             modelBuilder.Entity("Icom.Entities.Supplier", b =>

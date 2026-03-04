@@ -13,6 +13,7 @@ namespace Icom.Clients.Dtos
         public string Email { get; set; }
         public string Address { get; set; }
         public ClientType Type { get; set; }
+        public string TypeText { get; set; }
         public string Remarks { get; set; }
         public int TenantId { get; set; }
     }

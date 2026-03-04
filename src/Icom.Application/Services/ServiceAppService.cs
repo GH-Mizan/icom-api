@@ -8,6 +8,7 @@ using Icom.Enums;
 using Icom.Helpers;
 using Icom.Sales.Dtos;
 using Icom.Services.Dtos;
+using Icom.Students.Dtos;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
@@ -81,12 +82,23 @@ namespace Icom.Services
 
                 foreach (var p in items)
                 {
-                    p.PaymentStatusText = p.PaymentStatus.DisplayName();
                     p.ServiceTypeNames = "";
+                    List<string> serviceTypes = p.ServiceTypes.Split(',').ToList();
+                    foreach (var st in serviceTypes)
+                    {
+                        p.ServiceTypeNames += ((ServiceType)Convert.ToInt32(st)).DisplayName() + ", ";
+                    }
+                    p.PaymentStatusText = p.PaymentStatus.DisplayName();
                 }
 
                 return new PagedResultDto<ServiceOutputDto>(totalCount, items);
             }
+        }
+
+        public async Task<ServiceEntryDto> GetAsync(int id)
+        {
+            var entity = await _serviceRepository.GetAsync(id);
+            return ObjectMapper.Map<ServiceEntryDto>(entity);
         }
 
         [UnitOfWork]
@@ -95,25 +107,15 @@ namespace Icom.Services
             var id = input.Service.Id;
             if (id.HasValue)
             {
-                //var sales = await _salesRepo.GetAsync(id.Value);
-                //ObjectMapper.Map(input.Sales, sales);
+                var service = await _serviceRepository.GetAsync(id.Value);
+                ObjectMapper.Map(input.Service, service);
                 //await _salesRepo.UpdateAsync(sales);
 
-                //var prevSalesDetails = await _salesDetailsRepo.GetAllListAsync(x => x.SaleId == id);
-                //foreach (var sd in prevSalesDetails)
-                //{
-                //    var inventory = await _inventoryRepo.FirstOrDefaultAsync(f => f.ProductId == sd.ProductId && f.StockPointId == input.Sales.StockPointId);
-                //    if (inventory != null)
-                //    {
-                //        inventory.StockQty += sd.Quantity;
-                //        await _inventoryRepo.UpdateAsync(inventory);
-                //    }
-                //}
-                //await _salesDetailsRepo.BatchDeleteAsync(x => x.SaleId == id);
-                //await InsertSalesDetails(input.SalesDetails, id.Value, input.Sales.StockPointId);
 
-                //await _dueReceivedHistoryRepo.DeleteAsync(x => x.SalesId == id);
-                //await InsertDueReceivedAsync(input.DueReceived);
+                await _serviceDueReceivedHistoryRepository.DeleteAsync(x => x.ServiceId == id);
+                input.DueReceived.ServiceDate = service.Date;
+                input.DueReceived.ReceiveDate = service.Date;
+                await InsertDueReceivedAsync(input.DueReceived);
 
             }
             else
@@ -125,14 +127,6 @@ namespace Icom.Services
                 input.DueReceived.ServiceDate = service.Date;
                 input.DueReceived.ReceiveDate = service.Date;
                 await InsertDueReceivedAsync(input.DueReceived);
-
-                //var invoiceSettings = await _lbiSettingsRepo.SingleAsync(x => x.Key == InitialSetupKey.LastSalesInvoiceNumber);
-                //var lastInvoiceNumber = invoiceSettings.Value;
-                //string prefix = lastInvoiceNumber.Substring(0, 1);
-                //var parsedInvoiceNumber = Convert.ToInt32(lastInvoiceNumber.Remove(0, 1));
-
-                //invoiceSettings.Value = prefix + (parsedInvoiceNumber + 1).ToString().PadLeft(5, '0');
-                //await _lbiSettingsRepo.UpdateAsync(invoiceSettings);
             }
 
             return id.Value;
@@ -210,6 +204,13 @@ namespace Icom.Services
                 throw ex;
             }
             
+        }
+
+        [UnitOfWork]
+        public async Task ServiceRemoveAsync(int id)
+        {
+            await _serviceRepository.DeleteAsync(id);
+            await _serviceDueReceivedHistoryRepository.DeleteAsync(x => x.ServiceId == id);
         }
 
         public List<ComboboxItemDto> GetServiceTypesSelectListAsync()

@@ -47,6 +47,7 @@ namespace Icom.Clients
                                 Email = c.Email,
                                 Address = c.Address,
                                 Type = c.Type,
+                                TypeText = c.Type.DisplayName(),
                                 Remarks = c.Remarks
                             };
                 //var query = _productRepository.GetAll()
@@ -92,6 +93,11 @@ namespace Icom.Clients
                 Value = s.Id.ToString(),
                 DisplayText = s.Name
             }).OrderBy(o => o.DisplayText).ToList();
+        }
+
+        public async Task<string> GetClientContactNumberAsync(int clientId)
+        {
+            return (await _clientRepository.GetAsync(clientId)).ContactNumber;
         }
 
         public List<ComboboxItemDto> GetClientTypesSelectListAsync()
