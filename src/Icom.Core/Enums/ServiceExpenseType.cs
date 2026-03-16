@@ -4,6 +4,10 @@
     {
         PhotocopyPaper = 1,
         PrintPaper,
-        RubberSealItems
+        RubberSealItems,
+        ComputerAccessories,
+        OfficeEquipments,
+        Miscellaneous,
+        FlashSealItems
     }
 }

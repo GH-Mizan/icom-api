@@ -31,8 +31,9 @@ namespace Icom.Clients
             _unitOfWorkManager = unitOfWorkManager;
         }
 
-        public async Task<PagedResultDto<ClientOutputDto>> GetPaginatedClientsAsync(ProductsFilterDto filter)
+        public async Task<PagedResultDto<ClientOutputDto>> GetPaginatedClientsAsync(ClientFilterDto filter)
         {
+            var searchText = string.IsNullOrEmpty(filter.SearchText) ? null : filter.SearchText.ToLower();
             using (_unitOfWorkManager.Current.DisableFilter(AbpDataFilters.MustHaveTenant, AbpDataFilters.MayHaveTenant))
             {
                 var query = from c in await _clientRepository.GetAllAsync()
@@ -42,6 +43,7 @@ namespace Icom.Clients
                                 Id = c.Id,
                                 EntryDate = c.EntryDate,
                                 Name = c.Name,
+                                IdentificationName = c.IdentificationName,
                                 ContactNumber = c.ContactNumber,
                                 WhatsAppNumber = c.WhatsAppNumber,
                                 Email = c.Email,
@@ -50,8 +52,16 @@ namespace Icom.Clients
                                 TypeText = c.Type.DisplayName(),
                                 Remarks = c.Remarks
                             };
-                //var query = _productRepository.GetAll()
-                //    .Where(x => x.TenantId == _abpSession.TenantId);
+                if (searchText != null)
+                {
+                    query = query.Where(x =>
+                    x.Name.ToLower().Contains(searchText) ||
+                    x.IdentificationName.ToLower().Contains(searchText) ||
+                    x.ContactNumber.ToLower().Contains(searchText) ||
+                    x.Address.ToLower().Contains(searchText) 
+                    //x.TypeText.ToLower().Contains(searchText)
+                    );
+                }
 
                 var totalCount = await query.CountAsync();
 
@@ -91,13 +101,19 @@ namespace Icom.Clients
             return (await _clientRepository.GetAllListAsync()).Select(s => new ComboboxItemDto()
             {
                 Value = s.Id.ToString(),
-                DisplayText = s.Name
+                DisplayText = s.IdentificationName
             }).OrderBy(o => o.DisplayText).ToList();
         }
 
-        public async Task<string> GetClientContactNumberAsync(int clientId)
+        public async Task<ClientInfoDto> GetClientInfoAsync(int clientId)
         {
-            return (await _clientRepository.GetAsync(clientId)).ContactNumber;
+            var client = await _clientRepository.GetAsync(clientId);
+            return new ClientInfoDto()
+            {
+                Name = client.Name,
+                IdentificationName = client.IdentificationName,
+                ContactNumber = client.ContactNumber
+            };
         }
 
         public List<ComboboxItemDto> GetClientTypesSelectListAsync()

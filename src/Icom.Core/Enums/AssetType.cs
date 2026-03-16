@@ -2,6 +2,6 @@
 {
     public enum AssetType
     {
-
+        Default = 1
     }
 }

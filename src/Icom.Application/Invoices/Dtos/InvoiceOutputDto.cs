@@ -10,6 +10,7 @@ namespace Icom.Invoices.Dtos
         public string InvoiceNumber { get; set; }
         public int ClientId { get; set; }
         public string ClientName { get; set; }
+        public string ClientIdentificationName { get; set; }
         public InvoiceType InvoiceType { get; set; }
         public string InvoiceTypeText { get; set; }
         public decimal TotalBill { get; set; }

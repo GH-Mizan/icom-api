@@ -65,7 +65,8 @@ namespace Icom.Sales
             {
                 var query = from s in await _saleRepository.GetAllAsync()
                         join c in await _clientRepository.GetAllAsync() on s.ClientId equals c.Id
-                        where _abpSession.TenantId == null || s.TenantId == _abpSession.TenantId
+                        where (_abpSession.TenantId == null || s.TenantId == _abpSession.TenantId)
+                        && (filter.ClientId == null || s.ClientId == filter.ClientId)
                         select new SaleOutputDto()
                         {
                             Id = s.Id,
@@ -88,6 +89,25 @@ namespace Icom.Sales
                     x.InvoiceNumber.ToLower().Trim().Contains(searchText) ||
                     x.ClientName.ToLower().Trim().Contains(searchText)
                     );
+                }
+
+                if(filter.LifetimeDue)
+                {
+                    query = query.Where(x => x.DueAmount > 0);
+                }
+                else
+                {
+                    if(filter.DueOnly)
+                    {
+                        query = query.Where(x => x.DueAmount > 0);
+                    }
+                    if(filter.DateRangeSearch)
+                    {
+                        query = query.Where(x => x.Date.Date >= filter.StartDate.Value.Date && x.Date.Date <= filter.EndDate.Value.Date);
+                    } else if(filter.MonthlySearch)
+                    {
+                        query = query.Where(x => x.Date.Year == filter.Year && x.Date.Month == filter.Month);
+                    }
                 }
 
                 var totalCount = await query.CountAsync();

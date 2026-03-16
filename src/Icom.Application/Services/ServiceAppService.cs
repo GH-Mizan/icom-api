@@ -41,14 +41,15 @@ namespace Icom.Services
             _abpSession = abpSession;
         }
 
-        public async Task<PagedResultDto<ServiceOutputDto>> GetPaginatedServicesAsync(SalesFilterDto filter)
+        public async Task<PagedResultDto<ServiceOutputDto>> GetPaginatedServicesAsync(ServicesFilterDto filter)
         {
             var searchText = string.IsNullOrEmpty(filter.SearchText) ? null : filter.SearchText.ToLower().Trim();
             using (_unitOfWorkManager.Current.DisableFilter(AbpDataFilters.MustHaveTenant, AbpDataFilters.MayHaveTenant))
             {
                 var query = from s in await _serviceRepository.GetAllAsync()
                             join c in await _clientRepository.GetAllAsync() on s.ClientId equals c.Id
-                            where _abpSession.TenantId == null || s.TenantId == _abpSession.TenantId
+                            where (_abpSession.TenantId == null || s.TenantId == _abpSession.TenantId)
+                            && (filter.ClientId == null || s.ClientId == filter.ClientId)
                             select new ServiceOutputDto()
                             {
                                 Id = s.Id,
@@ -60,6 +61,7 @@ namespace Icom.Services
                                 Due = s.Due,
                                 ClientId = s.ClientId,
                                 ClientName = c.Name,
+                                ClientType = c.Type,
                                 PaymentStatus = s.PaymentStatus,
                                 Remarks = s.Remarks,
                                 TenantId = s.TenantId
@@ -71,6 +73,31 @@ namespace Icom.Services
                     x.InvoiceNumber.ToLower().Trim().Contains(searchText) ||
                     x.ClientName.ToLower().Trim().Contains(searchText)
                     );
+                }
+
+                if(!string.IsNullOrEmpty(filter.ServiceType))
+                {
+                    query = query.Where(x=> x.ServiceTypes.Contains(filter.ServiceType));
+                }
+
+                if (filter.LifetimeDue)
+                {
+                    query = query.Where(x => x.Due > 0);
+                }
+                else
+                {
+                    if (filter.DueOnly)
+                    {
+                        query = query.Where(x => x.Due > 0);
+                    }
+                    if (filter.DateRangeSearch)
+                    {
+                        query = query.Where(x => x.Date.Date >= filter.StartDate.Value.Date && x.Date.Date <= filter.EndDate.Value.Date);
+                    }
+                    else if (filter.MonthlySearch)
+                    {
+                        query = query.Where(x => x.Date.Year == filter.Year && x.Date.Month == filter.Month);
+                    }
                 }
 
                 var totalCount = await query.CountAsync();

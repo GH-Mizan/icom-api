@@ -44,6 +44,13 @@ namespace Icom.Students
             var query = (from s in await _studentRepository.GetAllAsync()
                          join bs in await _btebSessionRepository.GetAllAsync() on s.BtebSessionId equals bs.Id into sessions
                          from bs in sessions.DefaultIfEmpty()
+                         where (filter.IsBteb == null || s.Bteb == filter.IsBteb)
+                         && (filter.IsBtebAdmitted == null || s.BtebAdmitted == filter.IsBtebAdmitted)
+                         && (filter.IsBtebRegistered == null || s.BtebRegistered == filter.IsBtebRegistered)
+                         && (filter.CourseCompleted == null || s.CourseCompleted == filter.CourseCompleted)
+                         && (filter.CertificateDistributed == null || s.CertificateDistributed == filter.CertificateDistributed)
+                         && (filter.CourseId == null || s.Course == (IccCourses)filter.CourseId.Value)
+                         && (filter.BtebSessionId == null || s.BtebSessionId == filter.BtebSessionId)
                          select new StudentOutputDto()
                          {
                              Id = s.Id,
@@ -80,6 +87,8 @@ namespace Icom.Students
                              RunningProgram = s.RunningProgram,
                              RunningProgramText = s.RunningProgram.DisplayName(),
                              IsActive = s.IsActive,
+                             CourseCompleted = s.CourseCompleted,
+                             CertificateDistributed = s.CertificateDistributed,
                              TenantId = s.TenantId
                          }).AsQueryable();
 

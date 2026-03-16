@@ -18,6 +18,7 @@ namespace Icom.Services.Dtos
         public string PaymentStatusText { get; set; }
         public int ClientId { get; set; }
         public string ClientName { get; set; }
+        public ClientType ClientType { get; set; }
         public string Remarks { get; set; }
         public int TenantId { get; set; }
     }

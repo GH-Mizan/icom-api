@@ -9,6 +9,7 @@ namespace Icom.Entities
     {
         public DateTime EntryDate { get; set; }
         public string Name { get; set; }
+        public string IdentificationName { get; set; }
         public string ContactNumber { get; set; }
         public string WhatsAppNumber { get; set; }
         public string Email { get; set; }

@@ -50,7 +50,9 @@ namespace Icom.Products
                             join c in await _categoryRepository.GetAllAsync() on p.CategoryId equals c.Id
                             join b in await _brandRepository.GetAllAsync() on p.BrandId equals b.Id into brands
                             from b in brands.DefaultIfEmpty()
-                            where _abpSession.TenantId == null || p.TenantId == _abpSession.TenantId
+                            where (_abpSession.TenantId == null || p.TenantId == _abpSession.TenantId)
+                            && (filter.CategoryId == null || p.CategoryId == filter.CategoryId)
+                            && (filter.BrandId == null || p.BrandId == filter.BrandId)
                             select new ProductOutputDto()
                             {
                                 Id = b.Id,

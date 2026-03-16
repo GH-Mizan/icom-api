@@ -68,6 +68,7 @@ namespace Icom.Invoices
                              Date = i.Date,
                              ClientId = i.ClientId,
                              ClientName = c.Name,
+                             ClientIdentificationName = c.IdentificationName,
                              InvoiceType = i.InvoiceType,
                              InvoiceTypeText = i.InvoiceType.DisplayName(),
                              Remarks = i.Remarks,
@@ -78,7 +79,8 @@ namespace Icom.Invoices
             {
                 query = query.Where(x =>
                 x.InvoiceNumber.ToLower().Trim().Contains(searchText) ||
-                x.ClientName.ToLower().Trim().Contains(searchText)
+                x.ClientName.ToLower().Trim().Contains(searchText) ||
+                x.ClientIdentificationName.ToLower().Trim().Contains(searchText)
                 );
             }
 

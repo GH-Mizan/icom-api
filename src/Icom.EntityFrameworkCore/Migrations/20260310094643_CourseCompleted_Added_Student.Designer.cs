@@ -4,6 +4,7 @@ using Icom.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Icom.Migrations
 {
     [DbContext(typeof(IcomDbContext))]
-    partial class IcomDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260310094643_CourseCompleted_Added_Student")]
+    partial class CourseCompleted_Added_Student
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -1624,9 +1627,6 @@ namespace Icom.Migrations
                     b.Property<string>("Name")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("Remarks")
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<int>("TenantId")
                         .HasColumnType("int");
 
@@ -1813,9 +1813,6 @@ namespace Icom.Migrations
 
                     b.Property<DateTime>("EntryDate")
                         .HasColumnType("datetime2");
-
-                    b.Property<string>("IdentificationName")
-                        .HasColumnType("nvarchar(max)");
 
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("bit");

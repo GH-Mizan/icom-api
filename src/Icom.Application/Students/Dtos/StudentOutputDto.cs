@@ -39,6 +39,8 @@ namespace Icom.Students.Dtos
         public OfficePrograms RunningProgram { get; set; }
         public string RunningProgramText { get; set; }
         public bool IsActive { get; set; }
+        public bool CourseCompleted { get; set; }
+        public bool CertificateDistributed { get; set; }
         public int TenantId { get; set; }
     }
 }
