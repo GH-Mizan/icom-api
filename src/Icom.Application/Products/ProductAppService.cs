@@ -55,7 +55,7 @@ namespace Icom.Products
                             && (filter.BrandId == null || p.BrandId == filter.BrandId)
                             select new ProductOutputDto()
                             {
-                                Id = b.Id,
+                                Id = p.Id,
                                 ProductName = p.ProductName,
                                 Description = p.Description,
                                 CategoryId = p.CategoryId,

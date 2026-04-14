@@ -41,7 +41,7 @@ namespace Icom.Services
             _abpSession = abpSession;
         }
 
-        public async Task<PagedResultDto<ServiceOutputDto>> GetPaginatedServicesAsync(ServicesFilterDto filter)
+        public async Task<ServicesPagedResultDto> GetPaginatedServicesAsync(ServicesFilterDto filter)
         {
             var searchText = string.IsNullOrEmpty(filter.SearchText) ? null : filter.SearchText.ToLower().Trim();
             using (_unitOfWorkManager.Current.DisableFilter(AbpDataFilters.MustHaveTenant, AbpDataFilters.MayHaveTenant))
@@ -58,6 +58,8 @@ namespace Icom.Services
                                 ServiceTypes = s.ServiceTypes,
                                 ServiceCharge = s.ServiceCharge,
                                 TotalPaid = s.TotalPaid,
+                                Discount = s.Discount,
+                                NetServiceCharge = s.NetServiceCharge,
                                 Due = s.Due,
                                 ClientId = s.ClientId,
                                 ClientName = c.Name,
@@ -100,6 +102,14 @@ namespace Icom.Services
                     }
                 }
 
+                var output = new ServicesPagedResultDto()
+                {
+                    TotalServices = await query.SumAsync(s => s.ServiceCharge),
+                    TotalPaid = await query.SumAsync(s => s.TotalPaid),
+                    TotalDue = await query.SumAsync(s => s.Due),
+                    OverallDue = await _serviceRepository.GetAll().SumAsync(s => s.Due)
+                };
+
                 var totalCount = await query.CountAsync();
 
                 var items = await query
@@ -118,7 +128,9 @@ namespace Icom.Services
                     p.PaymentStatusText = p.PaymentStatus.DisplayName();
                 }
 
-                return new PagedResultDto<ServiceOutputDto>(totalCount, items);
+                output.Services = new PagedResultDto<ServiceOutputDto>(totalCount, items);
+
+                return output;
             }
         }
 
@@ -175,7 +187,7 @@ namespace Icom.Services
                 service.TotalPaid += input.TotalPaid;
                 service.Due = input.Due;
                 //sales.PaymentReceiveHistory = input.PaymentReceiveHistory;
-                service.PaymentStatus = service.Due == 0 ? PaymentStatus.Paid : service.TotalPaid > service.Due ? PaymentStatus.Partialpaid : PaymentStatus.Due;
+                service.PaymentStatus = service.Due == 0 ? PaymentStatus.Paid : service.ServiceCharge > service.Due ? PaymentStatus.Partialpaid : PaymentStatus.Due;
                 await _serviceRepository.UpdateAsync(service);
                 await InsertDueReceivedAsync(input.DueReceived);
             }

@@ -96,14 +96,12 @@ namespace Icom.Invoices
 
         public async Task<InvoiceEntryInputDto> GetAsync(int id)
         {
-            var output = new InvoiceEntryInputDto();
-
             var invoice = await _invoiceRepository.GetAsync(id);
             var invoiceDetails = await _invoiceDetailRepository.GetAllListAsync(x => x.InvoiceId == id);
             using (_unitOfWorkManager.Current.DisableFilter(AbpDataFilters.MustHaveTenant, AbpDataFilters.MayHaveTenant))
             {
                 var details = new List<InvoiceDetailsEntryDto>();
-                if(invoice.InvoiceType == InvoiceType.Product)
+                if (invoice.InvoiceType == InvoiceType.Product)
                 {
                     details = (from d in invoiceDetails
                                join p in await _productRepository.GetAllAsync() on d.ProductId equals p.Id
@@ -146,11 +144,11 @@ namespace Icom.Invoices
                 }
 
 
-                    return new InvoiceEntryInputDto()
-                    {
-                        Invoice = ObjectMapper.Map<InvoiceEntryDto>(invoice),
-                        InvoiceDetails = details
-                    };
+                return new InvoiceEntryInputDto()
+                {
+                    Invoice = ObjectMapper.Map<InvoiceEntryDto>(invoice),
+                    InvoiceDetails = details
+                };
             }
         }
 

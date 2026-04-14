@@ -5,6 +5,8 @@
         MSWord = 1,
         MSExcel,
         MSPowerPoint,
-        MSAccess
+        MSAccess,
+        AdobeIllustrator,
+        AdobePhotoshop
     }
 }

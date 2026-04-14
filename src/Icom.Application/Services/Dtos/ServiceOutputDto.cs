@@ -12,6 +12,8 @@ namespace Icom.Services.Dtos
         public string ServiceTypes { get; set; } //Json value (service types array)
         public string ServiceTypeNames { get; set; }
         public decimal ServiceCharge { get; set; }
+        public decimal Discount { get; set; }
+        public decimal NetServiceCharge { get; set; }
         public decimal TotalPaid { get; set; }
         public decimal Due { get; set; }
         public PaymentStatus PaymentStatus { get; set; }

@@ -96,9 +96,9 @@ namespace Icom.Clients
             }
         }
 
-        public async Task<List<ComboboxItemDto>> GetClientsSelectListAsync()
+        public async Task<List<ComboboxItemDto>> GetClientsSelectListAsync(ClientType? type)
         {
-            return (await _clientRepository.GetAllListAsync()).Select(s => new ComboboxItemDto()
+            return (await _clientRepository.GetAllListAsync(x=> type == null || x.Type == type)).Select(s => new ComboboxItemDto()
             {
                 Value = s.Id.ToString(),
                 DisplayText = s.IdentificationName

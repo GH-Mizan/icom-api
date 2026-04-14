@@ -14,8 +14,13 @@ namespace Icom.Entities
         [Column(TypeName = "decimal(10, 2)")]
         public decimal ServiceCharge { get; set; }
         [Column(TypeName = "decimal(10, 2)")]
+        public decimal Discount { get; set; }
+        [Column(TypeName = "decimal(10, 2)")]
+        public decimal NetServiceCharge { get; set; }
+        [Column(TypeName = "decimal(10, 2)")]
         public decimal TotalPaid { get; set; }
         [Column(TypeName = "decimal(10, 2)")]
+
         public decimal Due { get; set; }
         public PaymentStatus PaymentStatus { get; set; }
         public int ClientId { get; set; }

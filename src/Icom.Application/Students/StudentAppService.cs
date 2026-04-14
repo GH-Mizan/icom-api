@@ -123,6 +123,7 @@ namespace Icom.Students
                 var client = await _clientRepository.GetAsync(student.ClientId);
                 client.EntryDate = input.AdmisionDate;
                 client.Name = input.Name;
+                client.IdentificationName = input.Name;
                 client.ContactNumber = input.ContactNumber;
                 client.WhatsAppNumber = input.ContactNumber;
                 client.Email = input.Email;
@@ -150,22 +151,26 @@ namespace Icom.Students
             }
             else
             {
-                var client = new Client()
-                {
-                    EntryDate = input.AdmisionDate,
-                    Name = input.Name,
-                    ContactNumber = input.ContactNumber,
-                    WhatsAppNumber = input.ContactNumber,
-                    Email = input.Email,
-                    Address = input.PresentAddress,
-                    Type = ClientType.Student,
-                    Remarks = input.Remarks,
-                    TenantId = _abpSession.TenantId.Value
-                };
-                var clientId = await _clientRepository.InsertAndGetIdAsync(client);
-                
                 var student = ObjectMapper.Map<Student>(input);
-                student.ClientId = clientId;
+
+                if (!input.IsClientExists)
+                {
+                    var client = new Client()
+                    {
+                        EntryDate = input.AdmisionDate,
+                        Name = input.Name,
+                        IdentificationName = input.Name,
+                        ContactNumber = input.ContactNumber,
+                        WhatsAppNumber = input.ContactNumber,
+                        Email = input.Email,
+                        Address = input.PresentAddress,
+                        Type = ClientType.Student,
+                        Remarks = input.Remarks,
+                        TenantId = _abpSession.TenantId.Value
+                    };
+                    var clientId = await _clientRepository.InsertAndGetIdAsync(client);
+                    student.ClientId = clientId;
+                }
                 student.TenantId = _abpSession.TenantId.Value;
 
                 int? lastRoll = 0;

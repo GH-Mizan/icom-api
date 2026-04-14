@@ -8,6 +8,11 @@
         ComputerAccessories,
         OfficeEquipments,
         Miscellaneous,
-        FlashSealItems
+        FlashSealItems,
+        ShopRent,
+        StaffSalary,
+        StaffBonus,
+        ElectricityBill,
+        InternetBill
     }
 }

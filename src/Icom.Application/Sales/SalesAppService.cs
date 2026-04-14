@@ -12,8 +12,6 @@ using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.InteropServices;
-using System.Text.Json;
 using System.Threading.Tasks;
 
 namespace Icom.Sales
@@ -27,6 +25,7 @@ namespace Icom.Sales
         private readonly IRepository<Pricelist> _pricelistRepository;
         private readonly IRepository<Inventory> _inventoryRepository;
         private readonly IRepository<Client> _clientRepository;
+        private readonly IRepository<Category> _categoryRepository;
         private readonly IRepository<Invoice> _invoiceRepository;
         private readonly IRepository<InvoiceDetail> _invoiceDetailsRepository;
         private readonly IAbpSession _abpSession;
@@ -40,6 +39,7 @@ namespace Icom.Sales
             IRepository<Product> productRepository,
             IRepository<Pricelist> pricelistRepository,
             IRepository<Client> clientRepository,
+            IRepository<Category> categoryRepository,
             IRepository<Invoice> invoiceRepository,
             IRepository<InvoiceDetail> invoiceDetailsRepository,
             IUnitOfWorkManager unitOfWorkManager,
@@ -54,11 +54,12 @@ namespace Icom.Sales
             _pricelistRepository = pricelistRepository;
             _dueReceivedHistoryRepository = dueReceivedHistoryRepository;
             _clientRepository = clientRepository;
+            _categoryRepository = categoryRepository;
             _invoiceRepository = invoiceRepository;
             _invoiceDetailsRepository = invoiceDetailsRepository;
         }
 
-        public async Task<PagedResultDto<SaleOutputDto>> GetPaginatedAsync(SalesFilterDto filter)
+        public async Task<SalesPagedResultDto> GetPaginatedAsync(SalesFilterDto filter)
         {
             var searchText = string.IsNullOrEmpty(filter.SearchText) ? null : filter.SearchText.ToLower().Trim();
             using (_unitOfWorkManager.Current.DisableFilter(AbpDataFilters.MustHaveTenant, AbpDataFilters.MayHaveTenant))
@@ -67,7 +68,7 @@ namespace Icom.Sales
                         join c in await _clientRepository.GetAllAsync() on s.ClientId equals c.Id
                         where (_abpSession.TenantId == null || s.TenantId == _abpSession.TenantId)
                         && (filter.ClientId == null || s.ClientId == filter.ClientId)
-                        select new SaleOutputDto()
+                            select new SaleOutputDto()
                         {
                             Id = s.Id,
                             Date = s.Date,
@@ -83,32 +84,40 @@ namespace Icom.Sales
                             TenantId = s.TenantId
                         };
 
-                if (searchText != null)
-                {
-                    query = query.Where(x =>
-                    x.InvoiceNumber.ToLower().Trim().Contains(searchText) ||
-                    x.ClientName.ToLower().Trim().Contains(searchText)
-                    );
-                }
-
-                if(filter.LifetimeDue)
+                if (filter.LifetimeDue)
                 {
                     query = query.Where(x => x.DueAmount > 0);
                 }
                 else
                 {
-                    if(filter.DueOnly)
+                    if (searchText != null)
                     {
-                        query = query.Where(x => x.DueAmount > 0);
+                        query = query.Where(x =>
+                        x.InvoiceNumber.ToLower().Trim().Contains(searchText) ||
+                        x.ClientName.ToLower().Trim().Contains(searchText)
+                        );
                     }
-                    if(filter.DateRangeSearch)
+
+                    if(filter.IncludeDateSearch)
                     {
-                        query = query.Where(x => x.Date.Date >= filter.StartDate.Value.Date && x.Date.Date <= filter.EndDate.Value.Date);
-                    } else if(filter.MonthlySearch)
-                    {
-                        query = query.Where(x => x.Date.Year == filter.Year && x.Date.Month == filter.Month);
+                        if (filter.DateRangeSearch)
+                        {
+                            query = query.Where(x => x.Date.Date >= filter.StartDate.Value.Date && x.Date.Date <= filter.EndDate.Value.Date);
+                        }
+                        else if (filter.MonthlySearch)
+                        {
+                            query = query.Where(x => x.Date.Year == filter.Year && x.Date.Month == filter.Month);
+                        }
                     }
                 }
+                               
+                var output = new SalesPagedResultDto()
+                {
+                    TotalNetSales = await query.SumAsync(s=> s.NetAmount),
+                    TotalPaid = await query.SumAsync(s => s.PaidAmount),
+                    TotalDue = await query.SumAsync(s => s.DueAmount),
+                    OverallDue = await _saleRepository.GetAll().SumAsync(s=>s.DueAmount)
+                };
 
                 var totalCount = await query.CountAsync();
 
@@ -121,8 +130,65 @@ namespace Icom.Sales
                 {
                     p.PaymentStatusText = p.PaymentStatus.DisplayName();
                 }
+                output.Sales = new PagedResultDto<SaleOutputDto>(totalCount, items);
 
-                return new PagedResultDto<SaleOutputDto>(totalCount, items);
+                return output;
+            }
+        }
+
+        public async Task<PagedResultDto<SalesDetailsOutputDto>> GetPaginatedSalesDetailsAsync(SalesDetailsFilterDto filter)
+        {
+            using (_unitOfWorkManager.Current.DisableFilter(AbpDataFilters.MustHaveTenant, AbpDataFilters.MayHaveTenant))
+            {
+                var searchText = string.IsNullOrEmpty(filter.SearchText) ? null : filter.SearchText.ToLower().Trim();
+                var query = from sd in await _saleDetailRepository.GetAllAsync()
+                            join s in await _saleRepository.GetAllAsync() on sd.SaleId equals s.Id
+                            join cl in await _clientRepository.GetAllAsync() on s.ClientId equals cl.Id
+                            join p in await _productRepository.GetAllAsync() on sd.ProductId equals p.Id
+                            join c in await _categoryRepository.GetAllAsync() on p.CategoryId equals c.Id
+                            where (filter.ProductId == null || sd.ProductId == filter.ProductId)
+                            && (filter.CategoryId == null || p.CategoryId == filter.CategoryId)
+                            select new SalesDetailsOutputDto()
+                            {
+                                Id = sd.Id,                                
+                                SalesId = sd.SaleId,
+                                Date = s.Date,
+                                ClientName = cl.IdentificationName,
+                                ProductId = sd.ProductId,
+                                ProductName = p.ProductName,
+                                CategoryId = c.Id,
+                                CategoryName = c.CategoryName,
+                                SerialNo = sd.SerialNo,
+                                UnitPrice = sd.UnitPrice,
+                                Quantity = sd.Quantity,
+                                TotalPrice = sd.TotalPrice,
+                                Remarks = sd.Remarks
+                            };
+                if (searchText != null)
+                {
+                    query = query.Where(x =>
+                    x.ProductName.ToLower().Trim().Contains(searchText) ||
+                    x.CategoryName.ToLower().Trim().Contains(searchText) ||
+                    x.SerialNo.ToLower().Trim().Contains(searchText) ||
+                    x.Remarks.ToLower().Trim().Contains(searchText)
+                    );
+                }
+
+                if (filter.ClientId != null) 
+                {
+                    var salesIds = (await _saleRepository.GetAllAsync()).Where(x => x.ClientId == filter.ClientId).Select(s => s.Id).ToList();
+                    query = query.Where(x => salesIds.Contains(x.SalesId));
+                }
+
+                var totalCount = await query.CountAsync();
+
+                var items = await query
+                    .OrderBy(x => x.ProductName)
+                    .Skip(filter.Skip)
+                    .Take(filter.Take)
+                    .ToListAsync();
+
+                return new PagedResultDto<SalesDetailsOutputDto>(totalCount, items);
             }
         }
 
@@ -132,25 +198,25 @@ namespace Icom.Sales
             var id = input.Sales.Id;
             if (id.HasValue)
             {
-                //var sales = await _salesRepo.GetAsync(id.Value);
-                //ObjectMapper.Map(input.Sales, sales);
-                //await _salesRepo.UpdateAsync(sales);
+                var sales = await _saleRepository.GetAsync(id.Value);
+                ObjectMapper.Map(input.Sales, sales);
+                await _saleRepository.UpdateAsync(sales);
 
-                //var prevSalesDetails = await _salesDetailsRepo.GetAllListAsync(x => x.SaleId == id);
-                //foreach (var sd in prevSalesDetails)
-                //{
-                //    var inventory = await _inventoryRepo.FirstOrDefaultAsync(f => f.ProductId == sd.ProductId && f.StockPointId == input.Sales.StockPointId);
-                //    if (inventory != null)
-                //    {
-                //        inventory.StockQty += sd.Quantity;
-                //        await _inventoryRepo.UpdateAsync(inventory);
-                //    }
-                //}
-                //await _salesDetailsRepo.BatchDeleteAsync(x => x.SaleId == id);
-                //await InsertSalesDetails(input.SalesDetails, id.Value, input.Sales.StockPointId);
+                var prevSalesDetails = await _saleDetailRepository.GetAllListAsync(x => x.SaleId == id);
+                foreach (var sd in prevSalesDetails)
+                {
+                    var inventory = await _inventoryRepository.FirstOrDefaultAsync(f => f.ProductId == sd.ProductId);
+                    if (inventory != null)
+                    {
+                        inventory.Quantity += sd.Quantity;
+                        await _inventoryRepository.UpdateAsync(inventory);
+                    }
+                }
+                await _saleDetailRepository.BatchDeleteAsync(x => x.SaleId == id);
+                await InsertSalesDetails(input.SalesDetails, id.Value);
 
-                //await _dueReceivedHistoryRepo.DeleteAsync(x => x.SalesId == id);
-                //await InsertDueReceivedAsync(input.DueReceived);
+                await _dueReceivedHistoryRepository.DeleteAsync(x => x.SalesId == id);
+                await InsertDueReceivedAsync(input.DueReceived);
 
             }
             else
@@ -340,10 +406,38 @@ namespace Icom.Sales
         //    }
         //}
 
-        public async Task<SaleEntryDto> GetAsync(int id)
+        public async Task<SalesEntryInputDto> GetAsync(int id)
         {
-            var entity = await _saleRepository.GetAsync(id);
-            return ObjectMapper.Map<SaleEntryDto>(entity);
+            var output = new SalesEntryInputDto();
+            var sale = await _saleRepository.GetAsync(id);
+            var saleDetails = await _saleDetailRepository.GetAllListAsync(x => x.SaleId == id);
+
+            using (_unitOfWorkManager.Current.DisableFilter(AbpDataFilters.MustHaveTenant, AbpDataFilters.MayHaveTenant))
+            {
+                var details = new List<SalesDetailsEntryDto>();
+                details = (from d in saleDetails
+                           join p in await _productRepository.GetAllAsync() on d.ProductId equals p.Id
+                           where d.SaleId == id
+                           select new SalesDetailsEntryDto()
+                           {
+                               Id = id,
+                               ProductId = d.ProductId,
+                               ProductName = p.ProductName,
+                               SalesId = d.SaleId,
+                               SerialNo = d.SerialNo,
+                               Quantity = d.Quantity,
+                               UnitPrice = d.UnitPrice,
+                               TotalPrice = d.TotalPrice,
+                               Remarks = d.Remarks
+                           }).ToList();
+
+
+                return new SalesEntryInputDto()
+                {
+                    Sales = ObjectMapper.Map<SalesEntryDto>(sale),
+                    SalesDetails = details
+                };
+            }
         }
 
         public async Task<SalesEntryInputDto> PrepareSaleFromInvoiceAsync(string invoiceNumber)
@@ -375,7 +469,26 @@ namespace Icom.Sales
                     output.Sales.InvoiceNumber = "DUPLICATE";
             }
             return output;
-        } 
+        }
+
+        [UnitOfWork]
+        public async Task SalesRemoveAsync(int saleId)
+        {
+            var prevSalesDetails = await _saleDetailRepository.GetAllListAsync(x => x.SaleId == saleId);
+            foreach (var sd in prevSalesDetails)
+            {
+                var inventory = await _inventoryRepository.FirstOrDefaultAsync(f => f.ProductId == sd.ProductId);
+                if (inventory != null)
+                {
+                    inventory.Quantity += sd.Quantity;
+                    await _inventoryRepository.UpdateAsync(inventory);
+                }
+            }
+
+            await _dueReceivedHistoryRepository.BatchDeleteAsync(x => x.SalesId == saleId);
+            await _saleDetailRepository.BatchDeleteAsync(x => x.SaleId == saleId);
+            await _saleRepository.DeleteAsync(x => x.Id == saleId);
+        }
     }
 
 }
