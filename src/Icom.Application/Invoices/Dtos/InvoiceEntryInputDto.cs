@@ -35,6 +35,7 @@ namespace Icom.Invoices.Dtos
         public ServiceType ServiceType { get; set; }
         public string ServiceTypeText { get; set; }
         public string WarrantyPeriod { get; set; }
+        public string CustomWarrantyText { get; set; }
         public int? Quantity { get; set; }
         public decimal? UnitPrice { get; set; }
         public decimal TotalAmount { get; set; }

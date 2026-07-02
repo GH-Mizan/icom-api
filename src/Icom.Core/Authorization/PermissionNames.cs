@@ -9,4 +9,5 @@ public static class PermissionNames
 
     public const string Pages_Roles = "Pages.Roles";
     public const string Pages_PurchasePrice = "Pages.PurchasePrice";
+    public const string Pages_UpdateClassSheetInventory = "Pages.UpdateClassSheetInventory";
 }

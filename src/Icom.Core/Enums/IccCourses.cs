@@ -2,7 +2,7 @@
 {
     public enum IccCourses
     {
-        ComputerOfficeApplicationProgram = 1,
+        ComputerOfficeApplication = 1,
         GraphicsDesign,
         VideoEditing
     }

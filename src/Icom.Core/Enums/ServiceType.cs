@@ -6,6 +6,8 @@
         ComputerRepair,
         ComputerSales,
         CCTVCameraSetup,
-        ComputerTraining
+        ComputerTraining,
+        SoftwareService,
+        Miscellaneous
     }
 }

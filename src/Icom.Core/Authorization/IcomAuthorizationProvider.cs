@@ -13,6 +13,7 @@ public class IcomAuthorizationProvider : AuthorizationProvider
         context.CreatePermission(PermissionNames.Pages_Roles, L("Roles"));
         context.CreatePermission(PermissionNames.Pages_Tenants, L("Tenants"), multiTenancySides: MultiTenancySides.Host);
         context.CreatePermission(PermissionNames.Pages_PurchasePrice, L("PurchasePrice"));
+        context.CreatePermission(PermissionNames.Pages_UpdateClassSheetInventory, L("UpdateClassSheetInventory"));
     }
 
     private static ILocalizableString L(string name)

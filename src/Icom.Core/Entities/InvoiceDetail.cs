@@ -12,6 +12,7 @@ namespace Icom.Entities
         public string SealText { get; set; }
         public ServiceType ServiceType { get; set; }
         public string WarrantyPeriod { get; set; }
+        public string CustomWarrantyText { get; set; }
         public int? Quantity { get; set; }
         public decimal? UnitPrice { get; set; }
         [Column(TypeName = "decimal(10, 2)")]

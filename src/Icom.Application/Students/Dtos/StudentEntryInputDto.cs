@@ -7,6 +7,7 @@ namespace Icom.Students.Dtos
     {
         public int? Id { get; set; }
         public int ClientId { get; set; }
+        public string IdentityNumber { get; set; }
         public string Name { get; set; }
         public DateTime AdmisionDate { get; set; }
         public string FathersName { get; set; }

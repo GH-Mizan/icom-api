@@ -2,8 +2,6 @@
 using Abp.Domain.Repositories;
 using Abp.Domain.Uow;
 using Abp.Runtime.Session;
-using Icom.BtebSessions.Dtos;
-using Icom.Clients.Dtos;
 using Icom.Entities;
 using Icom.Enums;
 using Icom.Helpers;
@@ -11,9 +9,7 @@ using Icom.Students.Dtos;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net;
 using System.Threading.Tasks;
-using System.Xml.Linq;
 
 namespace Icom.Students
 {
@@ -45,6 +41,7 @@ namespace Icom.Students
                          join bs in await _btebSessionRepository.GetAllAsync() on s.BtebSessionId equals bs.Id into sessions
                          from bs in sessions.DefaultIfEmpty()
                          where (filter.IsBteb == null || s.Bteb == filter.IsBteb)
+                         && (filter.IsActive == null || s.IsActive == filter.IsActive)
                          && (filter.IsBtebAdmitted == null || s.BtebAdmitted == filter.IsBtebAdmitted)
                          && (filter.IsBtebRegistered == null || s.BtebRegistered == filter.IsBtebRegistered)
                          && (filter.CourseCompleted == null || s.CourseCompleted == filter.CourseCompleted)
@@ -54,6 +51,7 @@ namespace Icom.Students
                          select new StudentOutputDto()
                          {
                              Id = s.Id,
+                             IdentityNumber = s.IdentityNumber,
                              Name = s.Name,
                              AdmisionDate = s.AdmisionDate,
                              FathersName = s.FathersName,
@@ -98,7 +96,7 @@ namespace Icom.Students
                 x.Name.ToLower().Contains(searchText));
             }
 
-            var students = query.OrderBy(o => o.Id).Skip(filter.Skip).Take(filter.Take).ToList();
+            var students = query.OrderByDescending(o => o.AdmisionDate).Skip(filter.Skip).Take(filter.Take).ToList();
 
             return new PagedResultDto<StudentOutputDto>()
             {
@@ -183,7 +181,20 @@ namespace Icom.Students
                     lastRoll = (await _studentRepository.GetAllAsync()).OrderByDescending(o => o.ClassRoll).Where(x => !x.Bteb).FirstOrDefault()?.ClassRoll;
                 }
                 student.ClassRoll = (lastRoll ?? 0) + 1;
-                await _studentRepository.InsertAsync(student);
+
+                string idNumber = "";
+                if (student.Bteb) idNumber = "BM";
+                else idNumber = "BN";
+
+                if (student.Course == IccCourses.ComputerOfficeApplication) idNumber += "OA";
+                else if (student.Course == IccCourses.GraphicsDesign) idNumber += "GD";
+                else if (student.Course == IccCourses.VideoEditing) idNumber += "VE";
+                
+                var id =  await _studentRepository.InsertAndGetIdAsync(student);
+
+                idNumber += id.ToString().PadLeft(5, '0');
+                student.IdentityNumber = idNumber;
+                await _studentRepository.UpdateAsync(student);
             }
         }
 
@@ -229,6 +240,16 @@ namespace Icom.Students
                 lastRoll = (await _studentRepository.GetAllAsync()).OrderByDescending(o => o.ClassRoll).Where(x => !x.Bteb).FirstOrDefault()?.ClassRoll;
             }
             return (lastRoll ?? 0) + 1;
+        }
+
+        public async Task<List<ComboboxItemDto>> GetStudentSelectListAsync(bool activeOnly, bool notCompletedOnly)
+        {
+            var data = (await _studentRepository.GetAllAsync()).Where(x=> (activeOnly == false || x.IsActive) && (notCompletedOnly == false || !x.CourseCompleted)).ToList();
+            return data.Select(s => new ComboboxItemDto()
+            {
+                Value = s.Id.ToString(),
+                DisplayText = s.Name
+            }).ToList();
         }
     }
 }

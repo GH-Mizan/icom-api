@@ -39,4 +39,7 @@ public class IcomDbContext : AbpZeroDbContext<Tenant, Role, User, IcomDbContext>
     public DbSet<InvoiceDetail> InvoiceDetails { get; set; }
     public DbSet<BtebSession> BtebSessions { get; set; }
     public DbSet<Student> Students { get; set; }
+    public DbSet<Attendance> Attendances { get; set; }
+    public DbSet<ClassSheetDistribution> ClassSheetDistributions { get; set; }
+    public DbSet<ClassSheetInventory> ClassSheetInventories { get; set; }
 }

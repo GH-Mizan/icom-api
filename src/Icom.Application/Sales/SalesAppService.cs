@@ -311,33 +311,50 @@ namespace Icom.Sales
         [UnitOfWork]
         private async Task InsertSalesDetails(List<SalesDetailsEntryDto> salesDetailsInput, int salesId)
         {
-            var salesDetails = new List<SaleDetail>();
-            //var purchaseDetails = await _purchaseDetailsRepo.GetAllListAsync(x => salesDetailsInput.Select(s => s.ProductId).ToList().Contains(x.ProductId));
-            foreach (var sd in salesDetailsInput)
+            try
             {
-                
-                //if (!string.IsNullOrEmpty(sd.SerialNo))
-                //{
-                //    var inventory = await _inventoryRepository.FirstOrDefaultAsync(e => e.ProductId == sd.ProductId && e.SerialNo == sd.SerialNo);
-                //    inventory.Quantity -= sd.Quantity;
-                //}
-                //else
-                //{
-                //    var inventory = await _inventoryRepository.SingleAsync(e => e.ProductId == sd.ProductId);
-                //    inventory.Quantity -= sd.Quantity;
-                //}
+                var salesDetails = new List<SaleDetail>();
+                //var purchaseDetails = await _purchaseDetailsRepo.GetAllListAsync(x => salesDetailsInput.Select(s => s.ProductId).ToList().Contains(x.ProductId));
+                foreach (var sd in salesDetailsInput)
+                {
 
-                var inventory = await _inventoryRepository.SingleAsync(e => e.ProductId == sd.ProductId);
-                inventory.Quantity -= sd.Quantity;
+                    //if (!string.IsNullOrEmpty(sd.SerialNo))
+                    //{
+                    //    var inventory = await _inventoryRepository.FirstOrDefaultAsync(e => e.ProductId == sd.ProductId && e.SerialNo == sd.SerialNo);
+                    //    inventory.Quantity -= sd.Quantity;
+                    //}
+                    //else
+                    //{
+                    //    var inventory = await _inventoryRepository.SingleAsync(e => e.ProductId == sd.ProductId);
+                    //    inventory.Quantity -= sd.Quantity;
+                    //}
+                    var inventory = new Inventory();
+                    if(!string.IsNullOrEmpty(sd.SerialNo))
+                    {
+                        inventory = await _inventoryRepository.FirstOrDefaultAsync(e => e.ProductId == sd.ProductId && e.SerialNo == sd.SerialNo);
+                    }
+                    else
+                    {
+                        inventory = await _inventoryRepository.FirstOrDefaultAsync(e => e.ProductId == sd.ProductId);
+                    }
 
-                var detail = ObjectMapper.Map<SaleDetail>(sd);
-                detail.SaleId = salesId;
+                    inventory.Quantity -= sd.Quantity;
+                    await _inventoryRepository.UpdateAsync(inventory);
 
-                //var purchasePrice = purchaseDetails.Where(x => x.ProductId == sd.ProductId).First().UnitPrice;
-                //detail.TotalProfit = sd.TotalPrice - (purchasePrice * sd.Quantity);
-                salesDetails.Add(detail);
+                    var detail = ObjectMapper.Map<SaleDetail>(sd);
+                    detail.SaleId = salesId;
+
+                    //var purchasePrice = purchaseDetails.Where(x => x.ProductId == sd.ProductId).First().UnitPrice;
+                    //detail.TotalProfit = sd.TotalPrice - (purchasePrice * sd.Quantity);
+                    salesDetails.Add(detail);
+                }
+                await _saleDetailRepository.InsertRangeAsync(salesDetails);
             }
-            await _saleDetailRepository.InsertRangeAsync(salesDetails);
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+            
         }
 
         private async Task InsertDueReceivedAsync(DueReceivedHistoryDto input)

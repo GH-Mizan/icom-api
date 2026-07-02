@@ -11,5 +11,6 @@ namespace Icom.Students.Dtos
         public bool? CertificateDistributed { get; set; }
         public int? BtebSessionId { get; set; }
         public int? CourseId { get; set; }
+        public bool? IsActive { get; set; }
     }
 }

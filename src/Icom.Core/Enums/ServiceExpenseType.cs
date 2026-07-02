@@ -13,6 +13,8 @@
         StaffSalary,
         StaffBonus,
         ElectricityBill,
-        InternetBill
+        InternetBill,
+        MarketingExpense,
+        MarketingCommision
     }
 }
