@@ -338,6 +338,11 @@ namespace Icom.Sales
                         inventory = await _inventoryRepository.FirstOrDefaultAsync(e => e.ProductId == sd.ProductId);
                     }
 
+                    if (!string.IsNullOrEmpty(sd.SerialNo) && inventory == null)
+                    {
+                        inventory = await _inventoryRepository.FirstOrDefaultAsync(e => e.ProductId == sd.ProductId);
+                    }
+
                     inventory.Quantity -= sd.Quantity;
                     await _inventoryRepository.UpdateAsync(inventory);
 

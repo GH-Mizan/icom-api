@@ -41,7 +41,7 @@ namespace Icom.ServiceExpenses
                 x.Remarks.ToLower().Contains(searchText));
             }
 
-            var serviceExpenses = query.OrderBy(o => o.Id).Skip(filter.Skip).Take(filter.Take).ToList();
+            var serviceExpenses = query.OrderByDescending(o => o.Id).Skip(filter.Skip).Take(filter.Take).ToList();
 
             return new PagedResultDto<ServiceExpenseOutputDto>()
             {

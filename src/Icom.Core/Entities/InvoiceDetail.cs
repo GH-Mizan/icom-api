@@ -10,7 +10,8 @@ namespace Icom.Entities
         public int? ProductId { get; set; }
         public string SerialNumber { get; set; }
         public string SealText { get; set; }
-        public ServiceType ServiceType { get; set; }
+        public ServiceType? ServiceType { get; set; }
+        public string ServiceTypeText { get; set; }
         public string WarrantyPeriod { get; set; }
         public string CustomWarrantyText { get; set; }
         public int? Quantity { get; set; }

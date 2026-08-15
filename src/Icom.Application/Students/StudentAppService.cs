@@ -96,7 +96,7 @@ namespace Icom.Students
                 x.Name.ToLower().Contains(searchText));
             }
 
-            var students = query.OrderByDescending(o => o.AdmisionDate).Skip(filter.Skip).Take(filter.Take).ToList();
+            var students = query.OrderByDescending(o => o.Id).Skip(filter.Skip).Take(filter.Take).ToList();
 
             return new PagedResultDto<StudentOutputDto>()
             {

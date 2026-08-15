@@ -15,6 +15,7 @@
         ElectricityBill,
         InternetBill,
         MarketingExpense,
-        MarketingCommision
+        MarketingCommision,
+        StationaryItems
     }
 }

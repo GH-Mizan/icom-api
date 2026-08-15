@@ -134,7 +134,7 @@ namespace Icom.Invoices
                                {
                                    Id = id,
                                    ServiceType = d.ServiceType,
-                                   ServiceTypeText = d.ServiceType.DisplayName(),
+                                   ServiceTypeText = d.ServiceType != null ? d.ServiceType.DisplayName() : d.ServiceTypeText,
                                    WarrantyPeriod = d.WarrantyPeriod,
                                    Quantity = d.Quantity,
                                    UnitPrice = d.UnitPrice,

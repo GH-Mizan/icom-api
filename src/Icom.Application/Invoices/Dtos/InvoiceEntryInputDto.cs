@@ -32,7 +32,7 @@ namespace Icom.Invoices.Dtos
         public string SealText { get; set; }
         public string Category { get; set; }
         public  string Brand { get; set; }
-        public ServiceType ServiceType { get; set; }
+        public ServiceType? ServiceType { get; set; }
         public string ServiceTypeText { get; set; }
         public string WarrantyPeriod { get; set; }
         public string CustomWarrantyText { get; set; }
