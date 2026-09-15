@@ -43,6 +43,7 @@ namespace Icom.Entities
         public bool IsActive { get; set; }
         public bool CourseCompleted { get; set; }
         public bool CertificateDistributed { get; set; }
+        public string ImagePath { get; set; }
         public int TenantId { get; set; }
     }
 }

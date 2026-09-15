@@ -6,6 +6,7 @@ using Icom.Entities;
 using Icom.Enums;
 using Icom.Helpers;
 using Icom.Students.Dtos;
+using Microsoft.AspNetCore.Http;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -13,11 +14,11 @@ using System.Threading.Tasks;
 
 namespace Icom.Students
 {
-    public class StudentAppService: IcomAppServiceBase, IStudentAppService
+    public class StudentAppService : IcomAppServiceBase, IStudentAppService
     {
         private readonly IRepository<Student> _studentRepository;
         private readonly IRepository<Client> _clientRepository;
-        private readonly IRepository<BtebSession> _btebSessionRepository; 
+        private readonly IRepository<BtebSession> _btebSessionRepository;
         private readonly IAbpSession _abpSession;
         private readonly IUnitOfWorkManager _unitOfWorkManager;
         public StudentAppService(
@@ -87,6 +88,7 @@ namespace Icom.Students
                              IsActive = s.IsActive,
                              CourseCompleted = s.CourseCompleted,
                              CertificateDistributed = s.CertificateDistributed,
+                             ImagePath = s.ImagePath,
                              TenantId = s.TenantId
                          }).AsQueryable();
 
@@ -132,7 +134,7 @@ namespace Icom.Students
                 int? lastRoll = 0;
                 if (student.Bteb != input.Bteb || student.BtebSessionId != input.BtebSessionId)
                 {
-                    if(input.Bteb) //that means not bteb to bteb
+                    if (input.Bteb) //that means not bteb to bteb
                     {
                         lastRoll = (await _studentRepository.GetAllAsync()).OrderByDescending(o => o.ClassRoll).Where(x => x.Bteb && x.BtebSessionId == input.BtebSessionId).FirstOrDefault()?.ClassRoll;
                     }
@@ -141,7 +143,7 @@ namespace Icom.Students
                         lastRoll = (await _studentRepository.GetAllAsync()).OrderByDescending(o => o.ClassRoll).Where(x => !x.Bteb).FirstOrDefault()?.ClassRoll;
                     }
 
-                    input.Remarks = $"{input.Remarks} /##/ Prev Session Id: {student.BtebSessionId}; Prev Class Roll: {student.ClassRoll}";  
+                    input.Remarks = $"{input.Remarks} /##/ Prev Session Id: {student.BtebSessionId}; Prev Class Roll: {student.ClassRoll}";
                 }
 
                 ObjectMapper.Map(input, student);
@@ -189,8 +191,8 @@ namespace Icom.Students
                 if (student.Course == IccCourses.ComputerOfficeApplication) idNumber += "OA";
                 else if (student.Course == IccCourses.GraphicsDesign) idNumber += "GD";
                 else if (student.Course == IccCourses.VideoEditing) idNumber += "VE";
-                
-                var id =  await _studentRepository.InsertAndGetIdAsync(student);
+
+                var id = await _studentRepository.InsertAndGetIdAsync(student);
 
                 idNumber += id.ToString().PadLeft(5, '0');
                 student.IdentityNumber = idNumber;
@@ -231,9 +233,9 @@ namespace Icom.Students
         public async Task<int> GetNewRollAsync(bool bteb, int sessionId)
         {
             int? lastRoll = 0;
-            if(bteb)
+            if (bteb)
             {
-                lastRoll = (await _studentRepository.GetAllAsync()).OrderByDescending(o=> o.ClassRoll).Where(x => x.Bteb && x.BtebSessionId == sessionId).FirstOrDefault()?.ClassRoll;
+                lastRoll = (await _studentRepository.GetAllAsync()).OrderByDescending(o => o.ClassRoll).Where(x => x.Bteb && x.BtebSessionId == sessionId).FirstOrDefault()?.ClassRoll;
             }
             else
             {
@@ -244,12 +246,17 @@ namespace Icom.Students
 
         public async Task<List<ComboboxItemDto>> GetStudentSelectListAsync(bool activeOnly, bool notCompletedOnly)
         {
-            var data = (await _studentRepository.GetAllAsync()).Where(x=> (activeOnly == false || x.IsActive) && (notCompletedOnly == false || !x.CourseCompleted)).ToList();
+            var data = (await _studentRepository.GetAllAsync()).Where(x => (activeOnly == false || x.IsActive) && (notCompletedOnly == false || !x.CourseCompleted)).ToList();
             return data.Select(s => new ComboboxItemDto()
             {
                 Value = s.Id.ToString(),
                 DisplayText = s.Name
             }).ToList();
+        }
+
+        public async Task<string> UploadImage(IFormFile file)
+        {
+            return "";
         }
     }
 }

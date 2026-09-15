@@ -4,6 +4,7 @@ using Icom.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Icom.Migrations
 {
     [DbContext(typeof(IcomDbContext))]
-    partial class IcomDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260826070525_ImagePath_Added_Student")]
+    partial class ImagePath_Added_Student
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -1771,9 +1774,6 @@ namespace Icom.Migrations
                     b.Property<DateTime?>("DeletionTime")
                         .HasColumnType("datetime2");
 
-                    b.Property<int?>("Duration")
-                        .HasColumnType("int");
-
                     b.Property<DateTime?>("ExaminationDate")
                         .HasColumnType("datetime2");
 
@@ -2600,9 +2600,6 @@ namespace Icom.Migrations
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<int>("ClientId")
-                        .HasColumnType("int");
-
-                    b.Property<int?>("CourseId")
                         .HasColumnType("int");
 
                     b.Property<DateTime>("CreationTime")

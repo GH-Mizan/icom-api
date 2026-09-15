@@ -42,6 +42,8 @@ namespace Icom.Students.Dtos
         public bool IsActive { get; set; }
         public bool CourseCompleted { get; set; }
         public bool CertificateDistributed { get; set; }
+        public bool ShowImage { get; set; }
+        public string ImagePath { get; set; }
         public int TenantId { get; set; }
     }
 }

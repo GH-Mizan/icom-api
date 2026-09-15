@@ -24,6 +24,7 @@ namespace Icom.Entities
         public decimal Due { get; set; }
         public PaymentStatus PaymentStatus { get; set; }
         public int ClientId { get; set; }
+        public int? CourseId { get; set; }
         public string Remarks { get; set; }
         public int TenantId { get; set; }
 

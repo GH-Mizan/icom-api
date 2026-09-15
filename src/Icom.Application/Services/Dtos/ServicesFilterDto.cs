@@ -16,5 +16,8 @@ namespace Icom.Services.Dtos
         public bool MonthlySearch { get; set; }
         public bool LifetimeDue { get; set; }
         public string ServiceType { get; set; }
+        public int? CourseId { get; set; }
+        public int? SessionId { get; set; }
+        public bool NoFilter { get; set; }
     }
 }

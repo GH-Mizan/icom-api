@@ -13,5 +13,6 @@ namespace Icom.Entities
         public DateTime? ResultPublishedDate { get; set; }
         public bool IsCertificateProvided { get; set; }
         public DateTime? CertificateDate { get; set; }
+        public int? Duration { get; set; }
     }
 }

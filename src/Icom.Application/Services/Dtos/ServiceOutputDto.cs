@@ -1,6 +1,5 @@
 ﻿using Icom.Enums;
 using System;
-using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Icom.Services.Dtos
 {

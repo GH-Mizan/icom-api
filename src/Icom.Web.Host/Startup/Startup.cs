@@ -3,9 +3,10 @@ using Abp.AspNetCore.Mvc.Antiforgery;
 using Abp.AspNetCore.SignalR.Hubs;
 using Abp.Castle.Logging.Log4Net;
 using Abp.Extensions;
+using Castle.Facilities.Logging;
 using Icom.Configuration;
 using Icom.Identity;
-using Castle.Facilities.Logging;
+using Icom.Web.Host.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
@@ -79,6 +80,8 @@ namespace Icom.Web.Host.Startup
                     )
                 )
             );
+
+            services.AddSingleton<GoogleDriveService>();
         }
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env, ILoggerFactory loggerFactory)

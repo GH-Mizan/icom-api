@@ -25,13 +25,17 @@ namespace Icom.Services
         private readonly IRepository<Client> _clientRepository;
         private readonly IAbpSession _abpSession;
         private readonly IUnitOfWorkManager _unitOfWorkManager;
+        private readonly IRepository<Student> _studentRepository;
+        private readonly IRepository<BtebSession> _btebSessionRepository;
 
         public ServiceAppService(
             IRepository<Service> serviceRepository,
             IRepository<ServiceDueReceivedHistory> serviceDueReceivedHistoryRepository,
             IRepository<Client> clientRepository,
             IUnitOfWorkManager unitOfWorkManager,
-            IAbpSession abpSession
+            IAbpSession abpSession,
+            IRepository<Student> studentRepository,
+            IRepository<BtebSession> btebSessionRepository
             )
         {
             _serviceRepository = serviceRepository;
@@ -39,6 +43,8 @@ namespace Icom.Services
             _unitOfWorkManager = unitOfWorkManager;
             _clientRepository = clientRepository;
             _abpSession = abpSession;
+            _studentRepository = studentRepository;
+            _btebSessionRepository = btebSessionRepository;
         }
 
         public async Task<ServicesPagedResultDto> GetPaginatedServicesAsync(ServicesFilterDto filter)
@@ -69,6 +75,18 @@ namespace Icom.Services
                                 TenantId = s.TenantId
                             };
 
+                if (!string.IsNullOrEmpty(filter.ServiceType))
+                {
+                    query = query.Where(x => x.ServiceTypes.Contains(filter.ServiceType));
+                }
+                if (filter.SessionId.HasValue)
+                {
+                    var clientIds = (await _studentRepository.GetAllAsync())
+                    .Where(x => x.BtebSessionId == filter.SessionId && x.IsActive)
+                    .Select(s => s.ClientId).ToList();
+                    query = query.Where(x => clientIds.Contains(x.ClientId));
+                }
+
                 if (searchText != null)
                 {
                     query = query.Where(x =>
@@ -77,30 +95,31 @@ namespace Icom.Services
                     );
                 }
 
-                if(!string.IsNullOrEmpty(filter.ServiceType))
+                if(!filter.NoFilter)
                 {
-                    query = query.Where(x=> x.ServiceTypes.Contains(filter.ServiceType));
-                }
+                    
 
-                if (filter.LifetimeDue)
-                {
-                    query = query.Where(x => x.Due > 0);
-                }
-                else
-                {
-                    if (filter.DueOnly)
+                    if (filter.LifetimeDue)
                     {
                         query = query.Where(x => x.Due > 0);
                     }
-                    if (filter.DateRangeSearch)
+                    else
                     {
-                        query = query.Where(x => x.Date.Date >= filter.StartDate.Value.Date && x.Date.Date <= filter.EndDate.Value.Date);
-                    }
-                    else if (filter.MonthlySearch)
-                    {
-                        query = query.Where(x => x.Date.Year == filter.Year && x.Date.Month == filter.Month);
+                        if (filter.DueOnly)
+                        {
+                            query = query.Where(x => x.Due > 0);
+                        }
+                        if (filter.DateRangeSearch)
+                        {
+                            query = query.Where(x => x.Date.Date >= filter.StartDate.Value.Date && x.Date.Date <= filter.EndDate.Value.Date);
+                        }
+                        else if (filter.MonthlySearch)
+                        {
+                            query = query.Where(x => x.Date.Year == filter.Year && x.Date.Month == filter.Month);
+                        }
                     }
                 }
+                
 
                 var output = new ServicesPagedResultDto()
                 {
@@ -117,6 +136,9 @@ namespace Icom.Services
                     .Skip(filter.Skip)
                     .Take(filter.Take).ToListAsync();
 
+                var studentIds = items.Where(x => x.ClientType == ClientType.Student).Select(s => s.Id).ToList();
+                var students = await _studentRepository.GetAllListAsync(x => studentIds.Contains(x.Id));
+
                 foreach (var p in items)
                 {
                     p.ServiceTypeNames = "";
@@ -126,6 +148,8 @@ namespace Icom.Services
                         p.ServiceTypeNames += ((ServiceType)Convert.ToInt32(st)).DisplayName() + ", ";
                     }
                     p.PaymentStatusText = p.PaymentStatus.DisplayName();
+
+                    item
                 }
 
                 output.Services = new PagedResultDto<ServiceOutputDto>(totalCount, items);
@@ -255,6 +279,80 @@ namespace Icom.Services
         public List<ComboboxItemDto> GetServiceTypesSelectListAsync()
         {
             var output = ((ServiceType[])Enum.GetValues(typeof(ServiceType))).Select(c => new ComboboxItemDto() { Value = ((int)c).ToString(), DisplayText = c.DisplayName() }).ToList();
+            return output;
+        }
+
+        public async Task<List<StudentsDueDto>> GetStudentsDuesReportAsync(StudentsDueInputDto input)
+        {
+            if(!input.StudentId.HasValue && !input.SessionId.HasValue)
+            {
+                return new List<StudentsDueDto>();
+            }
+            var clientIds = new List<int>();
+            var sessionText = string.Empty;
+            if(input.StudentId.HasValue)
+            {
+                clientIds.Add(input.StudentId.Value);
+                var sessionId = (await _studentRepository.GetAsync(input.StudentId.Value)).BtebSessionId;
+                if (sessionId.HasValue)
+                    sessionText = (await _btebSessionRepository.GetAsync(sessionId.Value)).SessionName;
+            }
+            else
+            {
+                sessionText = (await _btebSessionRepository.GetAsync(input.SessionId.Value)).SessionName;
+                clientIds = (await _studentRepository.GetAllAsync())
+                    .Where(x=> 
+                    (
+                    input.AdmissionBefore == null || x.AdmisionDate.Date < input.AdmissionBefore.Value.Date) 
+                    && x.BtebSessionId == input.SessionId
+                    && x.Bteb
+                    && x.Course == IccCourses.ComputerOfficeApplication
+                    )
+                    .Select(s=> s.ClientId).ToList();
+            }
+
+
+            var data = (from student in await _studentRepository.GetAllAsync()
+                        join service in await _serviceRepository.GetAllAsync() on student.ClientId equals service.ClientId
+                        where student.IsActive && clientIds.Contains(student.ClientId)
+                        select new
+                        {
+                            student.Id,
+                            student.ClientId,
+                            student.Name,
+                            student.AdmisionDate,
+                            student.ContactNumber,
+                            student.IdentityNumber,
+                            student.FathersName,
+                            student.Bteb,
+                            service.ServiceCharge,
+                            service.Discount,
+                            service.TotalPaid,
+                            service.Due
+                        }).OrderByDescending(o => o.Id).ToList();
+
+            var output = new List<StudentsDueDto>();
+            foreach (var item in data) 
+            {
+                var dt = new StudentsDueDto
+                {
+                    Id = item.IdentityNumber,
+                    Name = item.Name,
+                    AdmissionDate = item.AdmisionDate,
+                    FathersName = item.FathersName,
+                    ContactNumber = item.ContactNumber,
+                    SessionText = sessionText,
+                    CourseFee = item.ServiceCharge - input.AdditionalCharge,
+                    AdditionalCharge = input.AdditionalCharge,
+                    Discount = item.Discount
+                };
+                dt.TotalFees = item.ServiceCharge - dt.Discount;
+                dt.TotalPaid = item.TotalPaid;
+                dt.TotalDue = item.Due;
+
+                output.Add(dt);
+            }
+
             return output;
         }
 
